@@ -62,11 +62,13 @@ class TestGuard(unittest.TestCase):
         self.assertEqual(s["best"]["loss"], 2)
         self.assertEqual(s["last"]["loss"], 3)
 
+    @mock.patch("guard.guard.Guard.get_summary",
+                return_value={"last": {"id": "1"}})
     @mock.patch("guard.guard.Guard.remove")
     @mock.patch("glob.glob", return_value=["1.json", "2.json"])
     @mock.patch("os.remove")
-    def test_cleanup(self, mock_osremove, mock_glob, mock_remove):
-        self.guard.cleanup({"last": {"id": "1"}})
+    def test_cleanup(self, mock_osremove, mock_glob, mock_remove, mock_sum):
+        self.guard.cleanup()
         mock_osremove.assert_called_once_with("2.json")
 
     @mock.patch("json.dump")
@@ -78,11 +80,11 @@ class TestGuard(unittest.TestCase):
 
     @mock.patch("guard.guard.Guard.cleanup")
     @mock.patch("guard.guard.Guard.update_summary")
-    @mock.patch("guard.guard.Guard.serialize")
+    @mock.patch("guard.guard.Guard.serialize", return_value=NotImplemented)
     @mock.patch("guard.guard.Guard.save_meta", return_value="1")
     def test_checkpoint(self, mock_save, mock_ser, mock_update, mock_clean):
         data = {"a": 3}
-        self.guard.checkpoint(data=data)
+        self.assertEqual(self.guard.checkpoint(meta=data), NotImplemented)
         mock_save.assert_called_once_with(data)
         mock_ser.assert_called_once_with(
             os.path.join(self.guard._dump_path, "1"))
@@ -138,3 +140,8 @@ class TestGuard(unittest.TestCase):
         mock_summary.assert_called_once()
         mock_deser.assert_called_once_with(os.path.join(
             self.guard._dump_path, "1"), 0, a=2)
+
+    @mock.patch("os.path.exists")
+    def test_has_history(self, mock_exists):
+        self.guard.has_history()
+        mock_exists.assert_called_once_with(self.guard._summary_file)

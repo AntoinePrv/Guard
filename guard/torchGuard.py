@@ -9,7 +9,7 @@ from .guard import Guard
 
 class TorchGuard(Guard):
     def serialize(self, path, **kwargs):
-        data = {k: k.state_dict() for k in kwargs}
+        data = {k: kwargs[k].state_dict() for k in kwargs}
         torch.save(data, path + ".pth.tar")
 
     def deserialize(self, path, **kwargs):
