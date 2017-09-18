@@ -89,7 +89,7 @@ class TestGuard(unittest.TestCase):
         mock_ser.assert_called_once_with(
             os.path.join(self.guard._dump_path, "1"))
         mock_update.assert_called_once_with(data)
-        mock_clean.assert_called_once()
+        mock_clean.assert_called_once_with()
 
     def test_serialize(self):
         self.assertEqual(self.guard.serialize("path"), NotImplemented)

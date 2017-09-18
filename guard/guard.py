@@ -202,8 +202,8 @@ class Guard(object):
         id = self.save_meta(meta)
         path = os.path.join(self._dump_path, id)
         result = self.serialize(path, *args, **kwargs)
-        summary = self.update_summary(meta)
-        self.cleanup(summary)
+        self.update_summary(meta)
+        self.cleanup()
         return result
 
     def serialize(self, path, *args, **kwargs):
