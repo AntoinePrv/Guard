@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-""" Module file for the Guard base class.
+"""Module file for the Guard base class.
 
 The Guard class allow to safely checkpoint information during an optimization
 process.
@@ -14,7 +14,8 @@ import glob
 
 
 class Guard(object):
-    """
+    """Guard main class.
+
     Guard is the base class making checkpoints. Everytime the method
     `checkpoint` is called. A json file file is created under
     {dir_path}/{exp_name}/meta with metadata given. A summary file is created
@@ -28,7 +29,8 @@ class Guard(object):
 
     def __init__(self, dir_path, exp_name, mode="all", best_key=None,
                  best_compare=lambda x, y: x < y, cache=True):
-        """ Creates the object.
+        """Create the object.
+
         Class constructor to defines future behaviours.
 
         Parameters
@@ -68,7 +70,8 @@ class Guard(object):
             os.makedirs(self._dump_path)
 
     def get_summary(self):
-        """ Gets the summary.
+        """Get the summary.
+
         Gets the summary file as a dictionnary. If cache is used the cache is
         returned.
 
@@ -85,7 +88,8 @@ class Guard(object):
         return {}
 
     def write_summary(self, summary):
-        """ Write in the summary.
+        """Write in the summary.
+
         Write the given dictionnary in the file as a json. Updated the cache if
         the cache is used.
 
@@ -101,7 +105,8 @@ class Guard(object):
             json.dump(summary, f, indent=2)
 
     def update_summary(self, meta):
-        """ Udpates the summary.
+        """Udpate the summary.
+
         Updates the summary with the new metadata checkpoints and write it to
         the file. If 'best' or 'last' can be computed, they will be added to
         the summary.
@@ -133,7 +138,8 @@ class Guard(object):
         return summary
 
     def cleanup(self):
-        """ Cleanup.
+        """Cleanup.
+
         Clear files that do not match the storing mode.
         """
         if "all" in self._mode:
@@ -153,7 +159,8 @@ class Guard(object):
                 self.remove(os.path.join(self._dump_path, id))
 
     def save_meta(self, meta):
-        """ Save the metadata to the file.
+        """Save the metadata to the file.
+
         Save the metadata given in the checkpoints to the metadata file. the
         following information is added: time, timestamp and an id.
 
@@ -183,7 +190,8 @@ class Guard(object):
         return id
 
     def checkpoint(self, meta={}, *args, **kwargs):
-        """ Make a checkpoint.
+        """Make a checkpoint.
+
         Save the metadata according to the storing mode, call for serialization
         and update the summary file.
 
@@ -207,7 +215,8 @@ class Guard(object):
         return result
 
     def serialize(self, path, *args, **kwargs):
-        """ Serialization.
+        """Serialization.
+
         Method to save special parameters for the checkpoint. Extend this
         function to save the heavyweight specifics of your process.
 
@@ -226,7 +235,8 @@ class Guard(object):
         return NotImplemented
 
     def deserialize(self, path, *args, **kwargs):
-        """ Deserialization.
+        """Deserialization.
+
         Method to load special checkpointed parameters. Extend this
         function to load the heavyweight specifics of your process.
 
@@ -245,7 +255,8 @@ class Guard(object):
         return NotImplemented
 
     def remove(self, path):
-        """ Remove the serialized data.
+        """Remove the serialized data.
+
         Method to removed the data created by serialized. This method removes
         all files starting with the given path. It can be overriden for mode
         complex serialized objects.
@@ -261,7 +272,8 @@ class Guard(object):
             os.remove(file)
 
     def get_best(self):
-        """ Best metadata.
+        """Best metadata.
+
         Returns the best metadata in the process.
 
         Returns
@@ -273,7 +285,8 @@ class Guard(object):
         return summary.get("best", None)
 
     def deserialize_best(self, *args, **kwargs):
-        """ Deserialize best object.
+        """Deserialize best object.
+
         Call deserialize on the best object in the process.
 
         Parameters
@@ -291,7 +304,8 @@ class Guard(object):
         return self.deserialize(path, *args, **kwargs)
 
     def get_last(self):
-        """ Best metadata.
+        """Best metadata.
+
         Returns the last metadata in the process.
 
         Returns
@@ -303,7 +317,8 @@ class Guard(object):
         return summary.get("last", None)
 
     def deserialize_last(self, *args, **kwargs):
-        """ Deserialize last object.
+        """Deserialize last object.
+
         Call deserialize on the last object in the process.
 
         Parameters
@@ -321,7 +336,8 @@ class Guard(object):
         return self.deserialize(path, *args, **kwargs)
 
     def has_history(self):
-        """ Experiment history.
+        """Experiment history.
+
         Check wether the experiment has previous history (files written).
 
         Returns
@@ -330,3 +346,32 @@ class Guard(object):
             Wether the experiment has previous history.
         """
         return os.path.exists(self._summary_file)
+
+    def get_history(self):
+        """Get all history.
+
+        Gets all history into one single dictionary. All dictionares are
+        aggregated into one dictionary. Every value in the dictionary is thus a
+        list of every file's values. Missing values are filled with `None`.
+        Values are sorted by the 'timestamp' of the witting.
+
+        Returns
+        -------
+        dict
+            The dictionary of all entries.
+        """
+        meta_filenames = os.path.join(self._meta_path, "*.json")
+        all_meta = list(map(json.load, glob.glob(meta_filenames)))
+        all_meta.sort(key=lambda d: d.get("timestamp", 0))
+
+        history = {}
+        for n, meta in enumerate(all_meta):
+            for k in meta:
+                if k in history:
+                    history[k].append(meta[k])
+                else:
+                    history[k] = n*[None] + [meta[k]]
+            for k in history:
+                if k not in meta:
+                    history[k].append(None)
+        return history
