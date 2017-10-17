@@ -361,7 +361,10 @@ class Guard(object):
             The dictionary of all entries.
         """
         meta_filenames = os.path.join(self._meta_path, "*.json")
-        all_meta = list(map(json.load, glob.glob(meta_filenames)))
+        all_meta = []
+        for filename in glob.glob(meta_filenames):
+            with open(filename) as f:
+                all_meta.append(json.load(f))
         all_meta.sort(key=lambda d: d.get("timestamp", 0))
 
         history = {}

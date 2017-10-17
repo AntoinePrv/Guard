@@ -147,13 +147,13 @@ class TestGuard(unittest.TestCase):
         self.guard.has_history()
         mock_exists.assert_called_once_with(self.guard._summary_file)
 
+    @mock.patch("builtins.open")
     @mock.patch("json.load", side_effect=[{1: 2}, {1: 3, 0: 5}, {0: 6}])
     @mock.patch("glob.glob", return_value=["a", "b", "c"])
-    def test_get_history(self, mock_glob, mock_load):
+    def test_get_history(self, mock_glob, mock_load, mock_open):
         history = self.guard.get_history()
         mock_glob.assert_called_once_with(
                 os.path.join(self.guard._meta_path, "*.json"))
-        mock_load.assert_called_with("c")
         self.assertIsNone(history[0][0])
         self.assertIsNone(history[1][2])
         self.assertEqual(len(history[0]), 3)
